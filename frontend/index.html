@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Question Answering - VQA Frontend</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        }
+        
+        .gradient-secondary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .gradient-accent {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .gradient-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .gradient-warm {
+            background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+        }
+        
+        .gradient-cool {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-sunset {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+        }
+        
+        .gradient-ocean {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .blob {
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
+            50% { transform: translateY(-30px) scale(1.1); opacity: 0.6; }
+        }
+        
+        .upload-zone {
+            transition: all 0.3s ease;
+        }
+        
+        .upload-zone:hover {
+            border-color: rgba(118, 75, 162, 0.6);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .upload-zone.dragover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.2);
+            transform: scale(1.02);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-gradient::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-gradient:hover:not(:disabled)::before {
+            left: 100%;
+        }
+        
+        .btn-gradient:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px -10px rgba(102, 126, 234, 0.5);
+        }
+        
+        .btn-gradient:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .answer-box {
+            background: linear-gradient(135deg, rgba(17, 153, 142, 0.15) 0%, rgba(56, 239, 125, 0.15) 100%);
+            border: 1px solid rgba(56, 239, 125, 0.3);
+        }
+        
+        .sample-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .sample-btn:hover:not(:disabled) {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.5);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .history-item {
+            transition: all 0.2s ease;
+        }
+        
+        .history-item:hover {
+            border-color: rgba(102, 126, 234, 0.3);
+            transform: translateX(5px);
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            80%, 100% { transform: scale(2); opacity: 0; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="text-white overflow-x-hidden">
+    <!-- Animated Background Blobs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="blob absolute -top-20 -right-20 w-96 h-96" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+        <div class="blob absolute top-1/3 -left-20 w-80 h-80" style="background: linear-gradient(135deg, #f093fb, #f5576c); animation-delay: 2s;"></div>
+        <div class="blob absolute bottom-0 right-1/4 w-72 h-72" style="background: linear-gradient(135deg, #4facfe, #00f2fe); animation-delay: 4s;"></div>
+        <div class="blob absolute top-1/4 right-1/3 w-64 h-64" style="background: linear-gradient(135deg, #fa709a, #fee140); animation-delay: 1s;"></div>
+        <div class="blob absolute bottom-1/4 left-1/3 w-56 h-56" style="background: linear-gradient(135deg, #a8edea, #fed6e3); animation-delay: 3s;"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <header class="text-center mb-12 fade-in">
+            <div class="inline-flex items-center gap-4 mb-6">
+                <div class="relative">
+                    <div class="absolute inset-0 gradient-primary rounded-3xl blur-xl opacity-50"></div>
+                    <div class="relative p-4 rounded-3xl gradient-primary shadow-2xl">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+                        Visual Question Answering
+                    </h1>
+                </div>
+            </div>
+            <p class="text-lg text-purple-200/80 max-w-2xl mx-auto mb-6">
+                Powered by <span class="font-semibold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">BLIP Model</span> - Ask questions about any image and get instant AI-powered answers
+            </p>
+            
+            <!-- Feature Badges -->
+            <div class="flex flex-wrap justify-center gap-3">
+                <span class="inline-flex items-center gap-2 px-5 py-2 rounded-full gradient-primary text-white text-sm font-medium shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                    </svg>
+                    AI-Powered
+                </span>
+                <span class="inline-flex items-center gap-2 px-5 py-2 rounded-full gradient-secondary text-white text-sm font-medium shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Fast Processing
+                </span>
+                <span class="inline-flex items-center gap-2 px-5 py-2 rounded-full gradient-sunset text-white text-sm font-medium shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Image Understanding
+                </span>
+                <span class="inline-flex items-center gap-2 px-5 py-2 rounded-full gradient-success text-white text-sm font-medium shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    Smart Answers
+                </span>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Left Column - Image Upload -->
+            <div class="space-y-6">
+                <!-- Image Upload Card -->
+                <div class="glass-card rounded-3xl shadow-2xl overflow-hidden fade-in">
+                    <div class="p-6 border-b border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl gradient-ocean">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-semibold text-white">Upload Image</h2>
+                                <p class="text-sm text-purple-200/60">Drag and drop or click to browse</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="uploadZone" class="upload-zone border-2 border-dashed border-white/20 rounded-2xl p-8 text-center cursor-pointer min-h-[280px] flex items-center justify-center">
+                            <input type="file" id="fileInput" accept="image/*" class="hidden">
+                            
+                            <div id="uploadPlaceholder">
+                                <div class="relative inline-block mb-4">
+                                    <div class="absolute inset-0 gradient-primary rounded-2xl blur-xl opacity-30"></div>
+                                    <div class="relative w-24 h-24 rounded-2xl gradient-primary flex items-center justify-center shadow-xl">
+                                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <p class="text-xl font-medium text-white mb-2">Drag & drop your image</p>
+                                <p class="text-purple-200/60 text-sm mb-4">or click to browse from your device</p>
+                                <span class="inline-flex items-center px-4 py-2 rounded-full bg-white/10 text-purple-200 text-sm border border-white/20">
+                                    Supports: JPG, PNG, GIF, WebP
+                                </span>
+                            </div>
+                            
+                            <div id="imagePreview" class="hidden w-full">
+                                <div class="relative inline-block">
+                                    <img id="previewImg" src="" alt="Uploaded" class="max-h-64 mx-auto rounded-2xl shadow-2xl">
+                                    <div class="absolute -top-3 -right-3">
+                                        <div class="relative">
+                                            <div class="absolute inset-0 bg-green-400 rounded-full blur-md opacity-50"></div>
+                                            <div class="relative p-2 bg-green-500 rounded-full shadow-lg">
+                                                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p id="imageName" class="text-white text-sm font-medium mt-4 px-4 py-2 bg-black/40 rounded-full inline-block"></p>
+                            </div>
+                        </div>
+                        
+                        <div id="imageActions" class="hidden mt-4 flex gap-3">
+                            <button id="clearBtn" class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-200 transition-all flex items-center justify-center gap-2 font-medium">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                Clear
+                            </button>
+                            <button id="downloadBtn" class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/20 text-white hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-200 transition-all flex items-center justify-center gap-2 font-medium">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q&A History Card -->
+                <div id="historyCard" class="hidden glass-card rounded-3xl shadow-2xl overflow-hidden fade-in">
+                    <div class="p-6 border-b border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl gradient-warm">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-xl font-semibold text-white">Q&A History</h2>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="historyList" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Question & Answer -->
+            <div class="space-y-6">
+                <!-- Question Input Card -->
+                <div class="glass-card rounded-3xl shadow-2xl overflow-hidden fade-in">
+                    <div class="p-6 border-b border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl gradient-sunset">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-semibold text-white">Ask a Question</h2>
+                                <p class="text-sm text-purple-200/60">Type your question about the image</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="relative">
+                            <textarea 
+                                id="questionInput" 
+                                placeholder="e.g., What is in the image? How many objects are there?"
+                                class="w-full min-h-[120px] p-4 rounded-xl bg-white/5 border border-white/20 text-white placeholder-purple-200/40 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 resize-none text-lg"
+                                disabled
+                            ></textarea>
+                            <div class="absolute bottom-3 right-3 text-xs text-purple-200/40">
+                                Press Enter to submit
+                            </div>
+                        </div>
+
+                        <button id="submitBtn" class="btn-gradient w-full py-5 text-lg font-semibold rounded-xl flex items-center justify-center gap-2 shadow-xl" disabled>
+                            <svg id="submitIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                            </svg>
+                            <span id="submitText">Get Answer</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sample Questions Card -->
+                <div class="glass-card rounded-3xl shadow-2xl overflow-hidden fade-in">
+                    <div class="p-6 border-b border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 rounded-xl gradient-accent">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-white">Sample Questions</h2>
+                                <p class="text-sm text-purple-200/60">Click to use a sample question</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="sampleQuestions" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- Answer Display Card -->
+                <div id="answerCard" class="glass-card rounded-3xl shadow-2xl overflow-hidden fade-in">
+                    <div class="p-6 border-b border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl gradient-success">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h2 class="text-xl font-semibold text-white">Answer</h2>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="answerPlaceholder" class="py-12 text-center">
+                            <div class="relative inline-block mb-4">
+                                <div class="absolute inset-0 gradient-success rounded-2xl blur-xl opacity-20"></div>
+                                <div class="relative w-20 h-20 rounded-2xl gradient-success flex items-center justify-center opacity-50">
+                                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-purple-200/50 text-lg">Upload an image and ask a question<br>to see the answer</p>
+                        </div>
+                        <div id="answerContent" class="hidden answer-box p-5 rounded-xl">
+                            <p id="answerText" class="text-lg text-white leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <script>
+        // API endpoint - change this if using a different server
+        const API_ENDPOINT = '/api/vqa';
+        
+        // Sample questions
+        const sampleQuestions = [
+            "What is in the image?",
+            "How many objects are there?",
+            "Describe the scene.",
+            "What colors can you see?",
+            "Is there a person in the image?",
+            "What is the main subject?",
+            "Describe the background.",
+            "What time of day is it?"
+        ];
+
+        // State
+        let imageData = null;
+        let imageName = '';
+        let history = [];
+
+        // DOM Elements
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const imageNameEl = document.getElementById('imageName');
+        const imageActions = document.getElementById('imageActions');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const questionInput = document.getElementById('questionInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitIcon = document.getElementById('submitIcon');
+        const submitText = document.getElementById('submitText');
+        const sampleQuestionsEl = document.getElementById('sampleQuestions');
+        const historyCard = document.getElementById('historyCard');
+        const historyList = document.getElementById('historyList');
+        const answerPlaceholder = document.getElementById('answerPlaceholder');
+        const answerContent = document.getElementById('answerContent');
+        const answerText = document.getElementById('answerText');
+        const answerCard = document.getElementById('answerCard');
+
+        // Initialize sample questions
+        function initSampleQuestions() {
+            sampleQuestionsEl.innerHTML = sampleQuestions.map(q => `
+                <button class="sample-btn px-4 py-2 rounded-xl bg-white/5 border border-white/20 text-purple-200 text-sm disabled:opacity-50 font-medium">
+                    ${q}
+                </button>
+            `).join('');
+        }
+
+        // Handle file selection
+        function handleFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageData = e.target.result;
+                    imageName = file.name;
+                    previewImg.src = imageData;
+                    imageNameEl.textContent = imageName;
+                    uploadPlaceholder.classList.add('hidden');
+                    imagePreview.classList.remove('hidden');
+                    imageActions.classList.remove('hidden');
+                    questionInput.disabled = false;
+                    enableButtons();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Enable buttons
+        function enableButtons() {
+            submitBtn.disabled = !imageData || !questionInput.value.trim();
+            document.querySelectorAll('.sample-btn').forEach(btn => {
+                btn.disabled = !imageData;
+            });
+        }
+
+        // Clear everything
+        function clearAll() {
+            imageData = null;
+            imageName = '';
+            previewImg.src = '';
+            uploadPlaceholder.classList.remove('hidden');
+            imagePreview.classList.add('hidden');
+            imageActions.classList.add('hidden');
+            questionInput.value = '';
+            questionInput.disabled = true;
+            history = [];
+            historyCard.classList.add('hidden');
+            answerPlaceholder.classList.remove('hidden');
+            answerContent.classList.add('hidden');
+            answerCard.classList.remove('ring-2', 'ring-green-500/30');
+            enableButtons();
+            initSampleQuestions();
+        }
+
+        // Simulate answer (for demo when no backend)
+        function simulateAnswer(question) {
+            const answers = {
+                "What is in the image?": "I can see several objects in this image. There appears to be a variety of items with different colors and shapes.",
+                "How many objects are there?": "Based on my analysis, I can identify several distinct objects in this image.",
+                "Describe the scene.": "This image shows a carefully arranged scene with multiple elements. The composition includes various objects with interesting colors and textures.",
+                "What colors can you see?": "I can observe multiple colors in this image, including various shades that create an appealing visual composition.",
+                "default": "Based on my analysis of the image, I can provide insights about the visual content. The image contains various elements that contribute to its overall composition."
+            };
+            return answers[question] || answers["default"];
+        }
+
+        // Handle question submission
+        async function handleSubmit() {
+            if (!imageData || !questionInput.value.trim()) return;
+
+            submitBtn.disabled = true;
+            submitIcon.innerHTML = `<svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>`;
+            submitText.textContent = 'Processing...';
+
+            try {
+                let answer;
+                
+                // Try to call the API
+                try {
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: imageData, question: questionInput.value })
+                    });
+
+                    const data = await response.json();
+                    answer = data.answer || simulateAnswer(questionInput.value);
+                } catch (apiError) {
+                    // If API fails, use simulation for demo
+                    console.log('API not available, using demo mode');
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate delay
+                    answer = simulateAnswer(questionInput.value);
+                }
+
+                // Show answer
+                answerText.textContent = answer;
+                answerPlaceholder.classList.add('hidden');
+                answerContent.classList.remove('hidden');
+                answerCard.classList.add('ring-2', 'ring-green-500/30');
+
+                // Add to history
+                history.push({ question: questionInput.value, answer: answer });
+                updateHistory();
+                
+            } catch (error) {
+                answerText.textContent = 'An error occurred. Please try again.';
+                answerPlaceholder.classList.add('hidden');
+                answerContent.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitIcon.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                </svg>`;
+                submitText.textContent = 'Get Answer';
+                enableButtons();
+            }
+        }
+
+        // Update history display
+        function updateHistory() {
+            if (history.length > 0) {
+                historyCard.classList.remove('hidden');
+                historyList.innerHTML = history.map((item, index) => `
+                    <div class="history-item p-4 rounded-xl bg-white/5 border border-white/10">
+                        <p class="text-sm text-purple-200/80 mb-2">
+                            <span class="font-semibold text-purple-300">Q:</span> ${item.question}
+                        </p>
+                        <p class="text-sm text-green-300">
+                            <span class="font-semibold text-green-400">A:</span> ${item.answer}
+                        </p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Event Listeners
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        clearBtn.addEventListener('click', clearAll);
+
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = imageName || 'image.png';
+            link.href = imageData;
+            link.click();
+        });
+
+        questionInput.addEventListener('input', enableButtons);
+        questionInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit();
+            }
+        });
+
+        submitBtn.addEventListener('click', handleSubmit);
+
+        sampleQuestionsEl.addEventListener('click', (e) => {
+            if (e.target.classList.contains('sample-btn')) {
+                questionInput.value = e.target.textContent.trim();
+                enableButtons();
+                questionInput.focus();
+            }
+        });
+
+        // Initialize
+        initSampleQuestions();
+    </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Visual Question Answering using BLIP
+# Required Dependencies
+# =====================
+
+# Core ML Framework
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Transformers for BLIP Model
+transformers>=4.30.0
+accelerate>=0.20.0
+
+# Image Processing
+Pillow>=9.0.0
+
+# Web Frontend Server
+flask>=2.0.0
+flask-cors>=3.0.0
+
+# Optional: For Gradio Interface
+gradio>=3.50.0
+
+# Optional: For Jupyter Notebooks
+jupyter>=1.0.0
+ipywidgets>=8.0.0
+
+# Optional: For Progress Bars
+tqdm>=4.65.0
+
+# Optional: For Data Handling
+numpy>=1.24.0
+pandas>=2.0.0
